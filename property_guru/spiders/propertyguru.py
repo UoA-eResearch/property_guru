@@ -2,12 +2,13 @@ import scrapy
 from scrapy.http import FormRequest
 import json
 import logging
+from pprint import pprint
+import pandas as pd
 
 logger = logging.getLogger("propertyguru")
 
 with open("secrets.json") as f:
     secrets = json.load(f)
-
 
 class PropertyguruSpider(scrapy.Spider):
     name = "propertyguru"
@@ -48,5 +49,47 @@ class PropertyguruSpider(scrapy.Spider):
     def parse(self, response):
         pass
 
+    def get_id(self, s):
+        return "".join(c for c in s if c.isnumeric())
+
     def handle_page(self, response):
-        logger.debug(response.css(".pager>span::text").get())
+        logger.debug(f"Page: {response.css('.pager>span::text').get()}")
+        links = response.css("div.listing a::attr(href)").getall()
+        listing_ids = [self.get_id(l) for l in links]
+        logger.debug(f"Listing IDs found on this page: {listing_ids}")
+        for listing_id in listing_ids:
+            yield FormRequest(
+                self.render_url,
+                formdata={
+                    "action": "MWUpdateQuery",
+                    "mwDisplayOutput": "MWSummary",
+                    "id": listing_id,
+                    "viewCallback": "updateQueryMWsummary();",
+                    "hid": "13",
+                    "hash": "F0E7AAEA-35C6-06CC-BBEF-39985CA98C53",
+                    "fastSearch": "",
+                },
+                callback=self.handle_listing,
+            )
+
+    def handle_listing(self, response):
+        try:
+            history = pd.read_html(response.text, match="Date")[0].to_csv(index=False)
+        except ValueError:
+            history = None
+        result = {
+            "Listing_title": response.css("#property-teaser::text").get().strip(),
+            "Listed_date": response.css("#property-listed-date::text").getall()[-1].split()[0],
+            "Status": response.css("div.listing-name-status::text").get().strip(),
+            "Address": response.css("#property-street-address>a::text").get(),
+            "Ad_description": "\n".join(response.css("#property-description::text").getall()).strip(),
+            "Price_method": response.css("#property-details-right > table > tbody > tr:nth-child(1) > td > strong::text").get(),
+            "Floor_area": response.css("#property-details-right > table > tbody > tr:nth-child(2) > td::text").get(),
+            "Listing_no": response.css("#property-details-right > table > tbody > tr:nth-child(3) > td::text").get(),
+            "Val_ref": response.css("#property-details-right > table > tbody > tr:nth-child(4) > td > a:nth-child(1)::text").get(),
+            "Agent_name": response.css("#property-agent-details h4::text").get(),
+            "Agency_name": response.css("#property-agent-details span::text").get(),
+            "Listing_history": history
+        }
+        #pprint(result)
+        yield result

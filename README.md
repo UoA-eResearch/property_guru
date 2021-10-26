@@ -1,7 +1,5 @@
 # property_guru
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
 Python scraper using scrapy to scrape listings from https://www.property-guru.co.nz/gurux/
 
 ## Installation
@@ -11,3 +9,11 @@ Python scraper using scrapy to scrape listings from https://www.property-guru.co
 ## Running
 
 `scrapy crawl propertyguru`
+
+### Writing to a file
+
+`scrapy crawl propertyguru -O Auckland.csv`
+
+### Clearing the cache
+
+`rm -rf .scrapy/httpcache`
