@@ -30,7 +30,7 @@ class PropertyguruSpider(scrapy.Spider):
                 "rememberPassword": "on",
             },
         )
-        for offset in tqdm(range(30020, -1, -20)):
+        for offset in tqdm(range(3360, -1, -20)):
             yield FormRequest(
                 self.render_url,
                 formdata={
@@ -39,12 +39,12 @@ class PropertyguruSpider(scrapy.Spider):
                     "region_id": "2",  # Auckland Region
                     "listed_in": "1960-01-01|2021-10-26",  # All time
                     "district_id": "76",  # Auckland
-                    "listing_status": "2",  # options = all, 1 (Active), 2 (Withdrawn)
+                    "listing_status": "1",  # options = all, 1 (Active), 2 (Withdrawn)
                     "suburb_id": "2728",  # Auckland Central
                     "listing_type_id": "13",  # Commercial Lease
                     "offset": str(offset),
                     "hid": "2",
-                    "hash": "F7A5D3D1-3C65-22B7-3703-45BACD968874",
+                    "hash": "F66DCC44-CFFC-92D2-A6EF-4117B1E4E9E0",
                     "fastSearch": "",
                 },
                 callback=self.handle_page,
@@ -62,6 +62,7 @@ class PropertyguruSpider(scrapy.Spider):
         return "".join(c for c in s if c.isnumeric())
 
     def handle_page(self, response):
+        assert len(response.text) > 112
         logger.debug(f"Page: {response.css('.pager>span::text').get()}")
         links = response.css("div.listing a::attr(href)").getall()
         listing_ids = [self.get_id(l) for l in links]
