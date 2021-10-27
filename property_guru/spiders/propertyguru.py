@@ -16,6 +16,8 @@ class PropertyguruSpider(scrapy.Spider):
     allowed_domains = ["property-guru.co.nz"]
     base_url = "https://www.property-guru.co.nz/gurux/"
     render_url = base_url + "render.php"
+    count = 0
+    all_listing_ids = []
 
     def start_requests(self):
         yield FormRequest(
@@ -28,7 +30,7 @@ class PropertyguruSpider(scrapy.Spider):
                 "rememberPassword": "on",
             },
         )
-        for offset in tqdm(range(30040, -1, -20)):
+        for offset in tqdm(range(30020, -1, -20)):
             yield FormRequest(
                 self.render_url,
                 formdata={
@@ -48,6 +50,11 @@ class PropertyguruSpider(scrapy.Spider):
                 callback=self.handle_page,
             )
 
+    def closed(self, reason):
+        logger.debug(reason)
+        with open("original_listing_ids", "w") as f:
+            f.writelines(f"{line}\n" for line in self.all_listing_ids)
+
     def parse(self, response):
         pass
 
@@ -58,7 +65,11 @@ class PropertyguruSpider(scrapy.Spider):
         logger.debug(f"Page: {response.css('.pager>span::text').get()}")
         links = response.css("div.listing a::attr(href)").getall()
         listing_ids = [self.get_id(l) for l in links]
-        logger.debug(f"Listing IDs found on this page: {listing_ids}")
+        self.all_listing_ids.extend(listing_ids)
+        self.count += len(listing_ids)
+        logger.debug(f"Current count {self.count}")
+        logger.debug(f"{len(listing_ids)} listing IDs found on this page: {listing_ids}")
+        assert len(listing_ids) in [7, 20]
         for listing_id in listing_ids:
             yield FormRequest(
                 self.render_url,
@@ -72,9 +83,10 @@ class PropertyguruSpider(scrapy.Spider):
                     "fastSearch": "",
                 },
                 callback=self.handle_listing,
+                cb_kwargs={"listing_id": listing_id}
             )
 
-    def handle_listing(self, response):
+    def handle_listing(self, response, listing_id):
         try:
             history = pd.read_html(response.text, match="Date")[0].to_csv(index=False)
         except ValueError:
@@ -91,7 +103,8 @@ class PropertyguruSpider(scrapy.Spider):
             "Val_ref": response.css("#property-details-right > table > tbody > tr:nth-child(4) > td > a:nth-child(1)::text").get(),
             "Agent_name": response.css("#property-agent-details h4::text").get(),
             "Agency_name": response.css("#property-agent-details span::text").get(),
-            "Listing_history": history
+            "Listing_history": history,
+            "Listing_id": listing_id
         }
         #pprint(result)
         yield result
