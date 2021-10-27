@@ -65,12 +65,13 @@ class PropertyguruSpider(scrapy.Spider):
         logger.debug(f"Page: {response.css('.pager>span::text').get()}")
         links = response.css("div.listing a::attr(href)").getall()
         listing_ids = [self.get_id(l) for l in links]
-        self.all_listing_ids.extend(listing_ids)
-        self.count += len(listing_ids)
-        logger.debug(f"Current count {self.count}")
         logger.debug(f"{len(listing_ids)} listing IDs found on this page: {listing_ids}")
-        assert len(listing_ids) in [7, 20]
+        if len(set(listing_ids)) != len(listing_ids):
+            logger.warning(f"{listing_ids} contains duplicates")
         for listing_id in listing_ids:
+            if listing_id in self.all_listing_ids:
+                logger.warning(f"{listing_id} is a duplicate")
+                continue # scrapy would ignore a duplicate FormRequest anyway
             yield FormRequest(
                 self.render_url,
                 formdata={
@@ -85,6 +86,7 @@ class PropertyguruSpider(scrapy.Spider):
                 callback=self.handle_listing,
                 cb_kwargs={"listing_id": listing_id}
             )
+        self.all_listing_ids.extend(listing_ids)
 
     def handle_listing(self, response, listing_id):
         try:
