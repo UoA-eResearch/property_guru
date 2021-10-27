@@ -8,10 +8,6 @@ Python scraper using scrapy to scrape listings from https://www.property-guru.co
 
 ## Running
 
-`scrapy crawl propertyguru`
-
-### Writing to a file
-
 `scrapy crawl propertyguru -O Auckland.csv`
 
 ### Clearing the cache
