@@ -28,7 +28,7 @@ class PropertyguruSpider(scrapy.Spider):
                 "rememberPassword": "on",
             },
         )
-        for offset in tqdm(range(30040, 0, -20)):
+        for offset in tqdm(range(30040, -1, -20)):
             yield FormRequest(
                 self.render_url,
                 formdata={
