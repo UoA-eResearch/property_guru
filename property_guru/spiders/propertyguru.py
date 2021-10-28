@@ -54,17 +54,17 @@ class PropertyguruSpider(scrapy.Spider):
                     cb_kwargs={"listing_id": listing_id}
                 )
         else:
-            for offset in tqdm(range(4880, -1, -20)):
+            for offset in tqdm(range(33400, -1, -20)):
                 yield FormRequest(
                     self.render_url,
                     formdata={
                         "action": "MWUpdateQuery",
                         "mwDisplayOutput": "MWTable",
-                        "region_id": "13",  # Canterbury Region
+                        "region_id": "2",  # Auckland Region
                         "listed_in": "1960-01-01|2021-10-30",  # All time
-                        "district_id": "60",  # Christchurch City
+                        "district_id": "76",  # Auckland City
                         "listing_status": "all",  # options = all, 1 (Active), 2 (Withdrawn)
-                        "suburb_id": "2081",  # Christchurch Central
+                        "suburb_id": "2728",  # Auckland Central
                         "listing_type_id": "13",  # Commercial Lease
                         "offset": str(offset),
                         "hid": "21",
