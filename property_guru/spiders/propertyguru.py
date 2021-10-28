@@ -91,6 +91,12 @@ class PropertyguruSpider(scrapy.Spider):
 
     def handle_listing(self, response, listing_id):
         try:
+            df = pd.read_html(response.text, match="Floor Area")[0]
+            df.columns = ["key", "value"]
+            info = {r[1].key: r[1].value for r in df.iterrows()}
+        except:
+            info = {}
+        try:
             history = pd.read_html(response.text, match="Date")[0].to_csv(index=False)
         except ValueError:
             history = None
@@ -100,10 +106,10 @@ class PropertyguruSpider(scrapy.Spider):
             "Status": response.css("div.listing-name-status::text").get().strip(),
             "Address": response.css("#property-street-address>a::text").get(),
             "Ad_description": "\n".join(response.css("#property-description::text").getall()).strip(),
-            "Price_method": response.css("#property-details-right > table > tbody > tr:nth-child(1) > td > strong::text").get(),
-            "Floor_area": response.css("#property-details-right > table > tbody > tr:nth-child(2) > td::text").get(),
-            "Listing_no": response.css("#property-details-right > table > tbody > tr:nth-child(3) > td::text").get(),
-            "Val_ref": response.css("#property-details-right > table > tbody > tr:nth-child(4) > td > a:nth-child(1)::text").get(),
+            "Price_method": info.get("Price"),
+            "Floor_area": info.get("Floor Area m2:"),
+            "Listing_no": info.get("Listing No.:"),
+            "Val_ref": info.get("Valuation ref.:"),
             "Agent_name": response.css("#property-agent-details h4::text").get(),
             "Agency_name": response.css("#property-agent-details span::text").get(),
             "Listing_history": history,
