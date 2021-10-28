@@ -90,12 +90,9 @@ class PropertyguruSpider(scrapy.Spider):
         self.all_listing_ids.extend(listing_ids)
 
     def handle_listing(self, response, listing_id):
-        try:
-            df = pd.read_html(response.text, match="Floor Area")[0]
-            df.columns = ["key", "value"]
-            info = {r[1].key: r[1].value for r in df.iterrows()}
-        except:
-            info = {}
+        df = pd.read_html(response.text)[0]
+        df.columns = ["key", "value"]
+        info = {r[1].key: r[1].value for r in df.iterrows()}
         try:
             history = pd.read_html(response.text, match="Date")[0].to_csv(index=False)
         except ValueError:
