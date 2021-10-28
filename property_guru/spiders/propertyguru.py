@@ -114,13 +114,19 @@ class PropertyguruSpider(scrapy.Spider):
         self.all_listing_ids.extend(listing_ids)
 
     def handle_listing(self, response, listing_id):
-        df = pd.read_html(response.text)[0]
-        df.columns = ["key", "value"]
-        info = {r[1].key: r[1].value for r in df.iterrows()}
         try:
-            history = pd.read_html(response.text, match="Date")[0].to_csv(index=False)
-        except ValueError:
-            history = None
+            tables = pd.read_html(response.text)
+            df = tables[0]
+            df.columns = ["key", "value"]
+            info = {r[1].key: r[1].value for r in df.iterrows()}
+            try:
+                history = tables[1].to_csv(index=False)
+            except IndexError:
+                history = None
+        except ValueError as e:
+            logger.error(e)
+            logger.debug(response.text)
+            raise
         result = {
             "Listing_title": response.css("#property-teaser::text").get().strip(),
             "Listed_date": response.css("#property-listed-date::text").getall()[-1].split()[0],
