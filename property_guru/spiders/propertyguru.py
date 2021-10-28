@@ -8,6 +8,13 @@ from tqdm import tqdm
 
 logger = logging.getLogger("propertyguru")
 
+try:
+    with open("ids_to_refetch") as f:
+        ids_to_refetch = [line.strip() for line in f]
+        print(f"Re-fetching {ids_to_refetch}")
+except:
+    ids_to_refetch = None
+
 with open("secrets.json") as f:
     secrets = json.load(f)
 
@@ -30,25 +37,42 @@ class PropertyguruSpider(scrapy.Spider):
                 "rememberPassword": "on",
             },
         )
-        for offset in tqdm(range(3360, -1, -20)):
-            yield FormRequest(
-                self.render_url,
-                formdata={
-                    "action": "MWUpdateQuery",
-                    "mwDisplayOutput": "MWTable",
-                    "region_id": "2",  # Auckland Region
-                    "listed_in": "1960-01-01|2021-10-26",  # All time
-                    "district_id": "76",  # Auckland
-                    "listing_status": "1",  # options = all, 1 (Active), 2 (Withdrawn)
-                    "suburb_id": "2728",  # Auckland Central
-                    "listing_type_id": "13",  # Commercial Lease
-                    "offset": str(offset),
-                    "hid": "2",
-                    "hash": "F66DCC44-CFFC-92D2-A6EF-4117B1E4E9E0",
-                    "fastSearch": "",
-                },
-                callback=self.handle_page,
-            )
+        if ids_to_refetch:
+            for listing_id in tqdm(ids_to_refetch):
+                yield FormRequest(
+                    self.render_url,
+                    formdata={
+                        "action": "MWUpdateQuery",
+                        "mwDisplayOutput": "MWSummary",
+                        "id": listing_id,
+                        "viewCallback": "updateQueryMWsummary();",
+                        "hid": "13",
+                        "hash": "F0E7AAEA-35C6-06CC-BBEF-39985CA98C53",
+                        "fastSearch": "",
+                    },
+                    callback=self.handle_listing,
+                    cb_kwargs={"listing_id": listing_id}
+                )
+        else:
+            for offset in tqdm(range(30020, -1, -20)):
+                yield FormRequest(
+                    self.render_url,
+                    formdata={
+                        "action": "MWUpdateQuery",
+                        "mwDisplayOutput": "MWTable",
+                        "region_id": "2",  # Auckland Region
+                        "listed_in": "1960-01-01|2021-10-26",  # All time
+                        "district_id": "76",  # Auckland
+                        "listing_status": "2",  # options = all, 1 (Active), 2 (Withdrawn)
+                        "suburb_id": "2728",  # Auckland Central
+                        "listing_type_id": "13",  # Commercial Lease
+                        "offset": str(offset),
+                        "hid": "2",
+                        "hash": "6A34A0BD-20BC-2FCE-A58D-53866D3C9BB4",
+                        "fastSearch": "",
+                    },
+                    callback=self.handle_page,
+                )
 
     def closed(self, reason):
         logger.debug(reason)
