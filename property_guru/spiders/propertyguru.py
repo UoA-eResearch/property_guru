@@ -1,5 +1,6 @@
 import scrapy
 from scrapy.http import FormRequest
+from scrapy.exceptions import CloseSpider
 import json
 import logging
 from pprint import pprint
@@ -22,7 +23,7 @@ LISTING_TYPES = {
     "Rural Sale": "14",
     "Sold": "90"
 }
-TARGET_SUBURB = SUBURBS["Auckland"]
+TARGET_SUBURB = SUBURBS["Wellington"]
 LISTING_TYPE_ID = LISTING_TYPES["Commercial Sale"]
 
 try:
@@ -107,7 +108,8 @@ class PropertyguruSpider(scrapy.Spider):
         logger.debug(f"Page: {response.css('.pager>span::text').get()}")
         links = response.css("div.listing a::attr(href)").getall()
         listing_ids = [self.get_id(l) for l in links]
-        assert len(listing_ids) > 0
+        if len(listing_ids) == 0:
+            raise CloseSpider('finished')
         logger.debug(f"{len(listing_ids)} listing IDs found on this page: {listing_ids}")
         if len(set(listing_ids)) != len(listing_ids):
             logger.warning(f"{listing_ids} contains duplicates")
