@@ -8,7 +8,11 @@ Python scraper using scrapy to scrape listings from https://www.property-guru.co
 
 ## Running
 
+### PropertyGuru
 `scrapy crawl propertyguru -O Auckland.csv`
+
+### Trademe
+`scrapy crawl trademe -O Auckland.csv`
 
 ### Clearing the cache
 
