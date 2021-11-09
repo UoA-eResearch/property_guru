@@ -8,6 +8,23 @@ from tqdm import tqdm
 
 logger = logging.getLogger("propertyguru")
 
+SUBURBS = {
+    # region_id, district_id, suburb_id
+    "Auckland": ["2", "76", "2728"],
+    "Wellington": ["9", "47", "2573"],
+    "Christchurch": ["13", "60", "2081"]
+}
+LISTING_TYPES = {
+    "Residential Sale": "10",
+    "Residential Rental": "11",
+    "Commercial Sale": "12",
+    "Commercial Lease": "13",
+    "Rural Sale": "14",
+    "Sold": "90"
+}
+TARGET_SUBURB = SUBURBS["Auckland"]
+LISTING_TYPE_ID = LISTING_TYPES["Commercial Sale"]
+
 try:
     with open("ids_to_refetch") as f:
         ids_to_refetch = [line.strip() for line in f]
@@ -54,18 +71,18 @@ class PropertyguruSpider(scrapy.Spider):
                     cb_kwargs={"listing_id": listing_id}
                 )
         else:
-            for offset in tqdm(range(33400, -1, -20)):
+            for offset in range(0, 100000, 20):
                 yield FormRequest(
                     self.render_url,
                     formdata={
                         "action": "MWUpdateQuery",
                         "mwDisplayOutput": "MWTable",
-                        "region_id": "2",  # Auckland Region
-                        "listed_in": "1960-01-01|2021-10-30",  # All time
-                        "district_id": "76",  # Auckland City
-                        "listing_status": "all",  # options = all, 1 (Active), 2 (Withdrawn)
-                        "suburb_id": "2728",  # Auckland Central
-                        "listing_type_id": "13",  # Commercial Lease
+                        "region_id": TARGET_SUBURB[0],
+                        "listed_in": "1960-01-01|2022-01-01",  # All time
+                        "district_id": TARGET_SUBURB[1],
+                        "listing_status": "all",
+                        "suburb_id": TARGET_SUBURB[2],
+                        "listing_type_id": LISTING_TYPE_ID,
                         "offset": str(offset),
                         "hid": "21",
                         "hash": "83751256-66D9-FE61-6C8C-E87EDEBFB5D9",
@@ -90,6 +107,7 @@ class PropertyguruSpider(scrapy.Spider):
         logger.debug(f"Page: {response.css('.pager>span::text').get()}")
         links = response.css("div.listing a::attr(href)").getall()
         listing_ids = [self.get_id(l) for l in links]
+        assert len(listing_ids) > 0
         logger.debug(f"{len(listing_ids)} listing IDs found on this page: {listing_ids}")
         if len(set(listing_ids)) != len(listing_ids):
             logger.warning(f"{listing_ids} contains duplicates")
