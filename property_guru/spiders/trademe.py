@@ -11,6 +11,7 @@ from datetime import datetime
 logger = logging.getLogger("trademe")
 
 LISTING_TYPE = "CommercialSale" # One of CommercialSale, CommercialLease, Residential, Rental, NewHomes, Rural, Lifestyle, Retirement. Not case sensitive
+# See https://developer.trademe.co.nz/api-reference/search-methods/commercial-sale-search for API documentation
 
 class TrademeSpider(scrapy.Spider):
     name = "trademe"
