@@ -1,6 +1,6 @@
 # property_guru
 
-Python scraper using scrapy to scrape listings from https://www.property-guru.co.nz/gurux/
+Python scraper using scrapy to scrape listings from https://www.property-guru.co.nz/gurux/ or TradeMe's API (https://api.trademe.co.nz)
 
 ## Installation
 
@@ -9,10 +9,10 @@ Python scraper using scrapy to scrape listings from https://www.property-guru.co
 ## Running
 
 ### PropertyGuru
-`scrapy crawl propertyguru -O Auckland.csv`
+`scrapy crawl propertyguru -O PropertyGuru_Auckland.csv`
 
 ### Trademe
-`scrapy crawl trademe -O Auckland.csv`
+`scrapy crawl trademe -O TradeMe_CommercialSale.csv`
 
 ### Clearing the cache
 
