@@ -13,7 +13,8 @@ SUBURBS = {
     # region_id, district_id, suburb_id
     "Auckland": ["2", "76", "2728"],
     "Wellington": ["9", "47", "2573"],
-    "Christchurch": ["13", "60", "2081"]
+    "Christchurch": ["13", "60", "2081"],
+    "Christchurch District All Suburbs": ["13", "60", ""]
 }
 LISTING_TYPES = {
     "Residential Sale": "10",
@@ -23,8 +24,8 @@ LISTING_TYPES = {
     "Rural Sale": "14",
     "Sold": "90"
 }
-TARGET_SUBURB = SUBURBS["Wellington"]
-LISTING_TYPE_ID = LISTING_TYPES["Commercial Sale"]
+TARGET_SUBURB = SUBURBS["Christchurch District All Suburbs"]
+LISTING_TYPE_ID = LISTING_TYPES["Residential Rental"]
 
 try:
     with open("ids_to_refetch") as f:
@@ -54,9 +55,13 @@ class PropertyguruSpider(scrapy.Spider):
                 "password": secrets["password"],
                 "rememberPassword": "on",
             },
+            callback=self.handle_login
         )
         loginRequest.meta['dont_cache'] = True
         yield loginRequest
+
+    def handle_login(self, response):
+        assert "$user" in response.text
         if ids_to_refetch:
             for listing_id in tqdm(ids_to_refetch):
                 yield FormRequest(
@@ -74,7 +79,7 @@ class PropertyguruSpider(scrapy.Spider):
                     cb_kwargs={"listing_id": listing_id}
                 )
         else:
-            for offset in range(0, 100000, 20):
+            for offset in range(0, 159151, 20):
                 yield FormRequest(
                     self.render_url,
                     formdata={
