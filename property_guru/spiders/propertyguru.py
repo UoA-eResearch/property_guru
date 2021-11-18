@@ -45,7 +45,7 @@ class PropertyguruSpider(scrapy.Spider):
     all_listing_ids = []
 
     def start_requests(self):
-        yield FormRequest(
+        loginRequest = FormRequest(
             self.base_url,
             formdata={
                 "login": "1",
@@ -55,6 +55,8 @@ class PropertyguruSpider(scrapy.Spider):
                 "rememberPassword": "on",
             },
         )
+        loginRequest.meta['dont_cache'] = True
+        yield loginRequest
         if ids_to_refetch:
             for listing_id in tqdm(ids_to_refetch):
                 yield FormRequest(
